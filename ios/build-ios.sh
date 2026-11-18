@@ -7,7 +7,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export PATH="$HOME/.cargo/bin:$PATH"            # the rustup toolchain: Homebrew's rustc has no iOS std
-SIGN_ID="${SIGN_ID:-9921DA56B69BB846944ECD1FAB6CCAC526172D37}"
+SIGN_ID="${SIGN_ID:--}"   # "-" = ad-hoc: iOS loads a plugin from Documents only when it is signed by the app's team
 SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
 rustup target add aarch64-apple-ios >/dev/null
 

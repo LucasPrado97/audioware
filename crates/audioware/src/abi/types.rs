@@ -332,11 +332,6 @@ impl AudioSystemExt {
         gender: Opt<PlayerGender>,
         total: Opt<bool>,
     ) -> f32 {
-        #[cfg(target_vendor = "apple")]
-        crate::utils::apple_diag!(
-            "AudioSystemExt.Duration native: event {:#018x} ({event_name})",
-            u64::from(event_name)
-        );
         let locale = match locale.into_option().map(Locale::try_from) {
             None => None,
             Some(Ok(x)) => Some(x),
