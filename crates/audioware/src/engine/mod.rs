@@ -411,6 +411,20 @@ where
             }
             Err(e) => {
                 warns!("cannot play sound: {e}");
+                #[cfg(target_vendor = "apple")]
+                crate::utils::apple_diag!(
+                    "cannot play sound: asked for {:#018x}, the banks hold {:?}",
+                    u64::from(event_name),
+                    self.banks
+                        .ids
+                        .iter()
+                        .take(8)
+                        .map(|x| {
+                            let name: &CName = x.as_ref();
+                            format!("{:#018x} ({name})", u64::from(*name))
+                        })
+                        .collect::<Vec<_>>()
+                );
             }
         }
     }

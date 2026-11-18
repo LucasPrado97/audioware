@@ -1,16 +1,26 @@
 // Audioware test for CyPort. Needs Audioware (+ Codeware) and r6/audioware/CyPortAudiowareTest.
-//   main menu opens      -> rising four-note tone  (cyport_test_menu)
-//   a save finishes loading (player attached) -> two beeps and a higher one, 3 s later (cyport_test_session)
-// Each step also writes a line to the game log channel DEBUG. Remove this folder and r6/audioware/CyPortAudiowareTest to uninstall.
+//   main menu opens                 -> rising four-note tone (cyport_test_menu), through the one-argument script overload
+//   3 s after a save finishes loading -> two beeps and a higher one (cyport_test_session), through the five-argument native directly
+//   5 s after a save finishes loading -> Duration() of both sounds (no sound; the values are in the Audioware log on Apple builds)
+// Every native call writes a line to red4ext/logs/audioware-*.log on Apple builds. Remove this folder and
+// r6/audioware/CyPortAudiowareTest to uninstall.
 module CyPortAudiowareTest
 import Audioware.*
 import Codeware.Localization.PlayerGender
 
-public class CyPortAudiowareTestDelay extends DelayCallback {
+public class CyPortAudiowareTestSession extends DelayCallback {
   public func Call() -> Void {
     let system = new AudioSystemExt();
-    FTLog(s"[CyPortAudiowareTest] session tone, Audioware \(system.Version()), duration \(system.Duration(n"cyport_test_session")) s");
-    system.Play(n"cyport_test_session");
+    let noEntity: EntityID;
+    let noSettings: ref<AudioSettingsExt>;
+    system.Play(n"cyport_test_session", noEntity, n"None", scnDialogLineType.Regular, noSettings);
+  }
+}
+
+public class CyPortAudiowareTestDuration extends DelayCallback {
+  public func Call() -> Void {
+    let system = new AudioSystemExt();
+    FTLog(s"[CyPortAudiowareTest] Audioware \(system.Version()), durations \(system.Duration(n"cyport_test_menu")) s and \(system.Duration(n"cyport_test_session")) s");
   }
 }
 
@@ -18,7 +28,6 @@ public class CyPortAudiowareTestDelay extends DelayCallback {
 protected cb func OnInitialize() -> Bool {
   let result = wrappedMethod();
   let system = new AudioSystemExt();
-  FTLog(s"[CyPortAudiowareTest] menu tone, Audioware \(system.Version()), duration \(system.Duration(n"cyport_test_menu")) s");
   system.Play(n"cyport_test_menu");
   return result;
 }
@@ -26,6 +35,7 @@ protected cb func OnInitialize() -> Bool {
 @wrapMethod(PlayerPuppet)
 protected cb func OnGameAttached() -> Bool {
   let result = wrappedMethod();
-  GameInstance.GetDelaySystem(this.GetGame()).DelayCallback(new CyPortAudiowareTestDelay(), 3.0, false);
+  GameInstance.GetDelaySystem(this.GetGame()).DelayCallback(new CyPortAudiowareTestSession(), 3.0, false);
+  GameInstance.GetDelaySystem(this.GetGame()).DelayCallback(new CyPortAudiowareTestDuration(), 5.0, false);
   return result;
 }

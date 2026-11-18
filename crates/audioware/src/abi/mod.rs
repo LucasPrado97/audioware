@@ -719,6 +719,15 @@ impl ExtCommand for AudioSystemExt {
         line_type: Opt<ScnDialogLineType>,
         ext: Ref<AudioSettingsExt>,
     ) {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!(
+            "AudioSystemExt.Play native: event {:#018x} ({}), entity {:?}, emitter {:?}, line {:?}",
+            u64::from(event_name),
+            event_name,
+            entity_id,
+            emitter_name.into_option().map(u64::from),
+            line_type
+        );
         let ext = ext.into_settings();
         if let Some(Err(e)) = ext.as_ref().map(Validate::validate) {
             warns!(hint: REPORT_MODDER, "invalid audio settings: {:#?}", e);

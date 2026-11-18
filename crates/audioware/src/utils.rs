@@ -244,3 +244,25 @@ pub fn get_base_offset() -> HMODULE {
         }
     }
 }
+
+/// Apple targets: a diagnostic line in the plugin log (info level), for the first 24 calls of each call site. The port is new there and
+/// the script console is a no-op, so the raw values the natives receive are written where they can be read back from the device.
+#[cfg(target_vendor = "apple")]
+macro_rules! apple_diag {
+    ($($arg:tt)*) => {{
+        static LEFT: ::std::sync::atomic::AtomicU32 = ::std::sync::atomic::AtomicU32::new(24);
+        if LEFT
+            .fetch_update(
+                ::std::sync::atomic::Ordering::Relaxed,
+                ::std::sync::atomic::Ordering::Relaxed,
+                |x| x.checked_sub(1),
+            )
+            .is_ok()
+        {
+            use ::red4ext_rs::PluginOps;
+            ::red4ext_rs::log::info!($crate::Audioware::env(), $($arg)*);
+        }
+    }};
+}
+#[cfg(target_vendor = "apple")]
+pub(crate) use apple_diag;
