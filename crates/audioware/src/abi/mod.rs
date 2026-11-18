@@ -378,6 +378,8 @@ extern "C" fn post_register() {
 /// Once plugin initialized.
 unsafe extern "C" fn on_exit_initialization(_: &GameApp) -> StateHandlerResult {
     lifecycle!("on plugin exit initialization");
+    #[cfg(target_vendor = "apple")]
+    crate::utils::ensure_script_function_layout("the exit of Initialization");
     Audioware::once_exit_initialization();
     StateHandlerResult::Finished
 }
@@ -423,6 +425,8 @@ impl GameSessionLifecycle for Audioware {
     fn on_game_session_before_start() {
         #[cfg(target_vendor = "apple")]
         crate::utils::apple_diag!("session native: BeforeStart");
+        #[cfg(target_vendor = "apple")]
+        crate::utils::ensure_script_function_layout("Session/BeforeStart");
         queue::notify(Lifecycle::Session(Session::BeforeStart));
     }
 

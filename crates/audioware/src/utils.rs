@@ -266,3 +266,28 @@ macro_rules! apple_diag {
 }
 #[cfg(target_vendor = "apple")]
 pub(crate) use apple_diag;
+
+/// Apple targets: gives the script functions declared inside Audioware's native classes (the `AudioSystemExt` overloads, for example)
+/// their variable layout, which the game leaves out there (red4ext-rs `apple_layout`): without it their locals overwrite their
+/// parameters. Runs until it has found those functions once (before the scripts are loaded there are none).
+#[cfg(target_vendor = "apple")]
+pub fn ensure_script_function_layout(at: &str) {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static DONE: AtomicBool = AtomicBool::new(false);
+    if DONE.load(Ordering::Acquire) {
+        return;
+    }
+    let outcome = red4ext_rs::internal::apple_layout::layout_scripted_functions();
+    if outcome.scripted > 0 || !outcome.supported {
+        DONE.store(true, Ordering::Release);
+    }
+    use red4ext_rs::PluginOps;
+    log::info!(
+        crate::Audioware::env(),
+        "script function layout at {at}: {} classes, {} script functions with variables, {} had no layout and got one{}",
+        outcome.classes,
+        outcome.scripted,
+        outcome.fixed,
+        if outcome.supported { "" } else { " (unknown game build, nothing done)" }
+    );
+}

@@ -408,7 +408,16 @@ pub fn run(
                     }
                 }
                 Lifecycle::Session(Session::Ready) => {
-                    if let Err(e) = engine.try_new_scene() {
+                    let scene = engine.try_new_scene();
+                    #[cfg(target_vendor = "apple")]
+                    crate::utils::apple_diag!(
+                        "Session/Ready: spatial scene {}",
+                        match &scene {
+                            Ok(()) => "created".to_string(),
+                            Err(e) => format!("not created: {e}"),
+                        }
+                    );
+                    if let Err(e) = scene {
                         lifecycle!("failed to create new scene: {e}");
                     }
                     state.set(Flags::LOADING, false);
