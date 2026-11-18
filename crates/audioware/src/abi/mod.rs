@@ -421,30 +421,44 @@ pub trait ListenerLifecycle {
 
 impl GameSessionLifecycle for Audioware {
     fn on_game_session_before_start() {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!("session native: BeforeStart");
         queue::notify(Lifecycle::Session(Session::BeforeStart));
     }
 
     fn on_game_session_start() {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!("session native: Start");
         queue::notify(Lifecycle::Session(Session::Start));
     }
 
     fn on_game_session_ready() {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!("session native: Ready");
         queue::notify(Lifecycle::Session(Session::Ready));
     }
 
     fn on_game_session_pause() {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!("session native: Pause");
         queue::notify(Lifecycle::Session(Session::Pause));
     }
 
     fn on_game_session_resume() {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!("session native: Resume");
         queue::notify(Lifecycle::Session(Session::Resume));
     }
 
     fn on_game_session_before_end() {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!("session native: BeforeEnd");
         queue::notify(Lifecycle::Session(Session::BeforeEnd));
     }
 
     fn on_game_session_end() {
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!("session native: End");
         queue::notify(Lifecycle::Session(Session::End));
     }
 
@@ -727,6 +741,11 @@ impl ExtCommand for AudioSystemExt {
             entity_id,
             emitter_name.into_option().map(u64::from),
             line_type
+        );
+        #[cfg(target_vendor = "apple")]
+        crate::utils::apple_diag!(
+            "AudioSystemExt.Play native: argument reads {:x?}",
+            red4ext_rs::types::arg_diag::last_arg_reads()
         );
         let ext = ext.into_settings();
         if let Some(Err(e)) = ext.as_ref().map(Validate::validate) {
