@@ -15,7 +15,7 @@ attach_native_func!(
 // macOS: Windows has one function for `inkIGameController::QueueEvent` and `inkLogicController::QueueEvent` (the hash above); the Mac has
 // two (`inkIGameController` 0x47CAC28 behind the hash above, `inkLogicController` 0x47D35E0 behind the second hash). Both get the same
 // detour, each through its own hook.
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 mod logic_controller {
     crate::attach_native_func!(
         "inkLogicController::QueueEvent (inkLogicController)",
@@ -30,13 +30,13 @@ mod logic_controller {
 
 pub fn attach_hooks(env: &red4ext_rs::SdkEnv) {
     attach_hook(env);
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     logic_controller::attach_hook(env);
 }
 
 pub fn detach_hooks(env: &red4ext_rs::SdkEnv) {
     detach_hook(env);
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     logic_controller::detach_hook(env);
 }
 

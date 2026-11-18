@@ -165,7 +165,7 @@ impl Diagnostic {
 pub(crate) static THREAD: OnceLock<Mutex<Option<JoinHandle<()>>>> = OnceLock::new();
 /// macOS, private loader: the `Initialization` exit listener that reports the bank loading never fires there, so the engine thread logs the
 /// report itself when it starts (set by `audioware_start`).
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 pub(crate) static REPORT_ON_START: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 static LIFECYCLE: OnceLock<RwLock<Option<Sender<Lifecycle>>>> = OnceLock::new();
@@ -214,7 +214,7 @@ pub fn spawn() -> Result<(), Error> {
                 let _ = DYNAMIC_EMITTERS.set(RwLock::new(Some(sde)));
                 let _ = OCCLUSIONS.set(RwLock::new(Some(so)));
                 lifecycle!("initialized channels");
-                #[cfg(target_os = "macos")]
+                #[cfg(target_vendor = "apple")]
                 if REPORT_ON_START.load(std::sync::atomic::Ordering::Acquire) {
                     engine.report_initialization(false);
                 }

@@ -27,6 +27,11 @@ pub enum BufferSize {
 impl BufferSize {
     /// Read ModSettings .ini file.
     pub fn read_ini() -> BufferSize {
+        // iOS (CyPort): a fixed size makes cpal call `-[AVAudioSession setPreferredIOBufferDuration:]`, which changes the buffer of the
+        // whole app (the game's own Wwise output included). The audio session belongs to the CyPort shim, so the size stays automatic.
+        if cfg!(target_os = "ios") {
+            return BufferSize::Auto;
+        }
         if let Ok(ini_filepath) = try_get_ini()
             && let Ok(conf) = Ini::load_from_file(ini_filepath)
         {

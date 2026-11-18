@@ -12,7 +12,7 @@ use crate::{SoundObject, SoundObjectId, WwiseId};
 /// macOS only: the id of the SoundEngine global in the Audioware block of the SDK address table (`Relocation-inl.hpp`, branch mac-rs).
 /// It is a Mac-only id (the 0xC0DExxxx range the other plugins use for rows that have no Windows hash): Windows reads the cell at a fixed
 /// address.
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 const SOUNDENGINE_GLOBAL: u32 = 0xC0DEA002;
 
 #[repr(C)]
@@ -52,7 +52,7 @@ impl SoundEngine {
     /// [SOUNDENGINE_GLOBAL], RVA 0x8DCC9E0; the Windows cell is .data 0x34389F0, which the code above reads through the module base).
     /// Evidence: two independent Windows/Mac function pairs load the same global, the `DefaultListener` init function
     /// (Windows 0xA2D45C = Mac 0xDD4010) and the `player_fired` function (Windows 0x9D524C = Mac 0x3E3E1D4); 118 Mac functions reference it.
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     pub unsafe fn get() -> Self {
         let cell = ::red4ext_rs::addr_hashes::resolve(SOUNDENGINE_GLOBAL);
         if cell == 0 {
@@ -65,7 +65,7 @@ impl SoundEngine {
     pub fn metadata_manager(&self) -> MetadataManager {
         // macOS: the global can still be null when a hook runs before Wwise created its engine; answer with a null manager, whose lookups
         // answer "invalid id", instead of reading near address 0.
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if self.0.is_null() {
             return MetadataManager(std::ptr::null_mut());
         }
@@ -78,7 +78,7 @@ impl SoundEngine {
     }
 
     pub fn sound_object_manager(&self) -> SoundObjectManager {
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if self.0.is_null() {
             return SoundObjectManager(std::ptr::null_mut());
         }
@@ -93,7 +93,7 @@ impl SoundEngine {
 
 impl MetadataManager {
     pub fn event_wwise_id(&self, event_name: CName) -> WwiseId {
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if self.0.is_null() {
             return WwiseId::default();
         }
@@ -107,7 +107,7 @@ impl MetadataManager {
         unsafe { get_event_wwise_id(self.0, event_name) }
     }
     pub fn switch_group_id(&self, switch_name: CName) -> WwiseId {
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if self.0.is_null() {
             return WwiseId::default();
         }
@@ -117,7 +117,7 @@ impl MetadataManager {
         unsafe { self.wwise_lookup()(self.0, field as VoidPtr, switch_name) }
     }
     pub fn switch_id(&self, switch_value: CName) -> WwiseId {
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if self.0.is_null() {
             return WwiseId::default();
         }
@@ -127,7 +127,7 @@ impl MetadataManager {
         unsafe { self.wwise_lookup()(self.0, field as VoidPtr, switch_value) }
     }
     pub fn game_parameter_id(&self, parameter_name: CName) -> WwiseId {
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if self.0.is_null() {
             return WwiseId::default();
         }
@@ -149,7 +149,7 @@ impl MetadataManager {
 
 impl SoundObjectManager {
     pub fn sound_object(&self, id: SoundObjectId) -> Option<&SoundObject> {
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if self.0.is_null() {
             return None;
         }
@@ -186,9 +186,9 @@ impl EventApplicationInterface {
         // `[vtable + 0x80]` five times; its other interface calls sit at the Windows slot plus 8 as well (Windows +0x70 x2 = Mac +0x78 x2,
         // Windows 0x88/0x90/0x98/0xA0 = Mac 0x90/0x98/0xA0/0xA8), which is the Itanium destructor shift. Inferred by call counts,
         // not yet confirmed from a live vtable.
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         const OFFSET: usize = 0x80;
-        #[cfg(not(target_os = "macos"))]
+        #[cfg(not(target_vendor = "apple"))]
         const OFFSET: usize = 0x78;
         let me = unsafe { *(self.0 as *const usize) };
         let getter = me + OFFSET;

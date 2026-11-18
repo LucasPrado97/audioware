@@ -3,7 +3,7 @@
 
 use red4ext_rs::log;
 // macOS: `console` is a no-op there, so these are unused.
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_vendor = "apple"))]
 use red4ext_rs::{
     IntoRepr, RttiSystem,
     types::{CName, ScriptRef},
@@ -206,11 +206,11 @@ pub fn error(msg: impl Into<String>) {
 /// macOS: no script call from native code. `console` runs on the audioware thread and from hooks, and executing a script function
 /// (`FTLog`) through `CBaseFunction::Execute` has not been exercised on the Mac yet (the macOS port registers natives but calls no
 /// script from native code so far). `reports!` has already written the message to the RED4ext log before it gets here.
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 #[inline]
 fn console(_msg: impl Into<String>, _func_name: &str) {}
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_vendor = "apple"))]
 #[inline]
 fn console(msg: impl Into<String>, func_name: &str) {
     use ::red4ext_rs::PluginOps;

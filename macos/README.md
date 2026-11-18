@@ -59,3 +59,18 @@ function start in the Mac binary whose body was compared with its Windows counte
 Game 2.5 (Mac build 5814786) with the hooks on: the natives register, a bank loads and `Duration()` reads its sounds,
 `AudioSystemExt.Play` and `Stop` are accepted, and a dynamic sound plays, reports its position and stops. The plugin log
 has no errors.
+
+## iOS (CyPort)
+
+The same Mac game binary (2.5.0) runs on the iPhone under CyPort, with RED4ext-macos built for iOS. Every macOS path of this port is taken
+there too (`cfg(target_vendor = "apple")`), with three differences:
+
+- Hooks: iOS cannot patch code at run time, so the 25 targets of `hook-offsets.txt` are baked into the app when CyPort builds it
+  (`tools/sites/audioware.txt` in the CyPort tree). In an app built without them every `Attach` fails and is counted as failed in the log.
+- Game folder: the CyPort shim answers `MSGameExecutablePath` with `<game folder>/Cyberpunk2077.app/Contents/MacOS/Cyberpunk2077`
+  (the game folder is in the app's documents), see `crates/manifest/src/depot.rs`.
+- Audio session: `AVAudioSession` belongs to the shim (category, silent switch, mixing). Audioware plays through cpal's RemoteIO unit,
+  which follows that session; the buffer size setting is ignored (it would change the IO buffer of the whole app).
+
+Build, sign and stage with `ios/build-ios.sh` (needs `../red4ext-rs`, branch `ios`, and `../RED4ext.SDK-macos`, branch `mac-next`).
+`ios/test-mod` is a small mod to check the result on the phone.

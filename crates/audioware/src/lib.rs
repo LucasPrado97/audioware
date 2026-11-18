@@ -3,7 +3,7 @@
 
 include!(concat!(env!("OUT_DIR"), "/version.rs"));
 
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 use red4ext_rs::log::info;
 use red4ext_rs::{
     Exportable, Plugin, SdkEnv, SemVer, U16CStr, export_plugin_symbols, log::error, wcstr,
@@ -44,7 +44,7 @@ impl Plugin for Audioware {
         // name pool and the memory pools do not exist yet (red4ext-rs `internal::is_private_loader`), and the audio engine builds names from
         // the manifests, so the engine, the RTTI callbacks and the hooks start later, at `audioware_start`. The game-state listener
         // (`Initialization` exit) is not used there either: the loader attaches none of its game application hooks, so no state ever runs.
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         if red4ext_rs::internal::is_private_loader() {
             info!(
                 env,
@@ -100,9 +100,9 @@ impl Audioware {
 // macOS: `audioware_registerNatives` is the entry point the macOS launcher (the tool that loads RED4ext plugins into the native Mac game)
 // calls to register the natives, once, at InitScripts. A build against the upstream red4ext-rs, whose macro takes one argument, uses the
 // one argument form elsewhere.
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 export_plugin_symbols!(Audioware, audioware_registerNatives);
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_vendor = "apple"))]
 export_plugin_symbols!(Audioware);
 
 /// macOS, private loader: starts the audio engine and attaches the hooks, once.
@@ -111,7 +111,7 @@ export_plugin_symbols!(Audioware);
 /// then (the launcher checks the ready flag first), and the natives the scripts call are registered. On Windows the same work happens in
 /// `Plugin::on_load` (the engine) and in the RTTI post-register callback (the hooks), which the Mac game never runs.
 /// Does nothing under another loader: there `on_load` and the post-register callback do it.
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 #[unsafe(no_mangle)]
 pub extern "C" fn audioware_start() {
     use red4ext_rs::PluginOps;

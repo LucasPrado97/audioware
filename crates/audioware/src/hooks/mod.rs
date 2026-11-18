@@ -1,8 +1,8 @@
 use red4ext_rs::SdkEnv;
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 use red4ext_rs::log;
 
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 pub mod macos;
 
 mod audio;
@@ -21,7 +21,7 @@ mod ui_system;
 mod audio_interface;
 
 // macOS: the debug-only hooks have no matching function on the Mac, so a debug build on the Mac leaves them out.
-#[cfg(all(debug_assertions, not(target_os = "macos")))]
+#[cfg(all(debug_assertions, not(target_vendor = "apple")))]
 mod save_handling_controller;
 
 #[cfg(feature = "research")]
@@ -35,7 +35,7 @@ mod vo;
 
 pub fn attach(env: &SdkEnv) {
     // macOS: `off` attaches nothing, `probe` attaches probes and starts the periodic report, `on` attaches the real detours (hooks/macos.rs).
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     match macos::mode() {
         macos::Mode::Off => {
             log::info!(env, "Audioware hooks: mode off, no hook attached");
@@ -64,7 +64,7 @@ pub fn attach(env: &SdkEnv) {
         script_audio_player::attach_hooks(env);
     }
 
-    #[cfg(all(debug_assertions, not(target_os = "macos")))]
+    #[cfg(all(debug_assertions, not(target_vendor = "apple")))]
     save_handling_controller::attach_hook(env);
 
     #[cfg(feature = "research")]
@@ -79,12 +79,12 @@ pub fn attach(env: &SdkEnv) {
         events::ent::attach_hook(env);
     }
 
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     macos::summary(env);
 }
 
 pub fn detach(env: &SdkEnv) {
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     {
         macos::stop_reporter();
         // `off` attached nothing, so there is nothing to detach (a Detach of a target that was never attached is not a no-op in the loader).
@@ -112,7 +112,7 @@ pub fn detach(env: &SdkEnv) {
         script_audio_player::detach_hooks(env);
     }
 
-    #[cfg(all(debug_assertions, not(target_os = "macos")))]
+    #[cfg(all(debug_assertions, not(target_vendor = "apple")))]
     save_handling_controller::detach_hook(env);
 
     #[cfg(feature = "research")]
@@ -135,7 +135,7 @@ mod offsets {
     pub const AUDIOSYSTEM_PLAY: u32                             = 0xCDB11D0E;   // 0x140974F58 (2.12a)
     pub const AUDIOSYSTEM_STOP: u32                             = 0xD2781D1E;   // 0x1424503F8 (2.12a)
     pub const AUDIOSYSTEM_SWITCH: u32                           = 0x15081DEA;   // 0x140291688 (2.12a)
-    #[cfg(all(debug_assertions, not(target_os = "macos")))]
+    #[cfg(all(debug_assertions, not(target_vendor = "apple")))]
     pub const ENTITY_DISPOSE: u32                               = 0x3221A80;    // 0x14232C744 (2.13)
     pub const ENTITY_QUEUE_EVENT: u32                           = 0x5E7D1BB0;   // 0x1404EA45C (2.31)
     pub const TIMEDILATABLE_SETINDIVIDUALTIMEDILATION: u32      = 0x80102488;   // 0x1423AF554 (2.13)
@@ -144,7 +144,7 @@ mod offsets {
     pub const TIMESYSTEM_UNSETTIMEDILATION: u32                 = 0xF0652075;   // 0x1409BAD34 (2.13)
     /// gameuiSaveHandlingController
     /// note: LoadSaveInGame and LoadModdedSave share same underlying address
-    #[cfg(all(debug_assertions, not(target_os = "macos")))]
+    #[cfg(all(debug_assertions, not(target_vendor = "apple")))]
     pub const SAVEHANDLINGCONTROLLER_LOAD_SAVE_IN_GAME: u32     = 0x9AB824D9;   // 0x14083FB6C (2.13)
     pub const UISYSTEM_QUEUE_EVENT: u32                         = 0x90231F41;   // 0x14062D454 (2.31)
     /// note: inkIWidgetController.QueueEvent (a.k.a inkIGameController)
@@ -163,7 +163,7 @@ mod offsets {
     pub const SOUNDENGINE_SET_GLOBAL_PARAMETER: u32             = 0x2D61ABB;    // 0x1409DA450 (2.31)
     pub const AUDIOINTERNALEVENT_APPLY_ACTION: u32              = 0x3ECF1E9E;   // 0x1404418B0 (2.31)
     // macOS: inlined, no hook (see camera_component.rs).
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(target_vendor = "apple"))]
     pub const CAMERACOMPONENT_OVERRIDE_AUDIO_LISTENERS: u32     = 0x519A1468;   // 0x14248078C (2.31)
     pub const CAMERACOMPONENT_ACTIVATE: u32                     = 0x55F51EAC;   // 0x1424808D8 (2.31)
     pub const CAMERACOMPONENT_DEACTIVATE: u32                   = 0x9A531F75;   // 0x142480994 (2.31)
@@ -174,10 +174,10 @@ mod offsets {
     /// `inkLogicController::QueueEvent`, Mac 0x47D35E0. The hash is the research-only constant below: on 2.31 it resolves to the same Windows
     /// address as `INKIWIDGETCONTROLLER_QUEUE_EVENT` (0x8A7E88 for both in the Windows address list), and the latter is
     /// `inkIGameController::QueueEvent` on the Mac (0x47CAC28).
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     pub const INKLOGICCONTROLLER_QUEUE_EVENT_MAC: u32           = 0xC87F2007;
     /// `inkMenuScenario::QueueBroadcastEvent`, Mac 0x4930428 (a Mac-only id; `INKMENUSCENARIO_QUEUE_EVENT` is `QueueEvent`, 0x4930374).
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     pub const INKMENUSCENARIO_QUEUE_BROADCAST_EVENT_MAC: u32    = 0xC0DEA001;
 
     #[cfg(feature = "research")]
@@ -223,12 +223,12 @@ mod offsets {
 #[macro_export]
 macro_rules! attach_hook_with_mode {
     ($env:expr, $hook:expr, $addr:expr, $name:literal, $detour:path, fn($($arg:ident: $ty:ty),* $(,)?) -> $ret:ty) => {{
-        #[cfg(not(target_os = "macos"))]
+        #[cfg(not(target_vendor = "apple"))]
         {
             let _ = $name;
             unsafe { $env.attach_hook($hook, $addr, $detour) };
         }
-        #[cfg(target_os = "macos")]
+        #[cfg(target_vendor = "apple")]
         {
             use $crate::hooks::macos::{LOGGED_CALLS, Mode, Probe, attached, mode, raw};
             static PROBE: Probe = Probe::new($name);

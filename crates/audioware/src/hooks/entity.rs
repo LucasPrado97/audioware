@@ -3,17 +3,17 @@ use red4ext_rs::SdkEnv;
 pub fn attach_hooks(env: &SdkEnv) {
     queue_event::attach_hook(env);
 
-    #[cfg(all(debug_assertions, not(target_os = "macos")))]
+    #[cfg(all(debug_assertions, not(target_vendor = "apple")))]
     dispose::attach_hook(env);
 }
 pub fn detach_hooks(env: &SdkEnv) {
     queue_event::detach_hook(env);
 
-    #[cfg(all(debug_assertions, not(target_os = "macos")))]
+    #[cfg(all(debug_assertions, not(target_vendor = "apple")))]
     dispose::detach_hook(env);
 }
 
-#[cfg(all(debug_assertions, not(target_os = "macos")))]
+#[cfg(all(debug_assertions, not(target_vendor = "apple")))]
 mod dispose {
 
     use std::{mem, ops::Not};

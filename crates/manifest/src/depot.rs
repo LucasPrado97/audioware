@@ -74,12 +74,49 @@ where
 
 /// Try to retrieve a specific folder from filesystem.
 pub fn try_get_folder(folder: impl AsRef<Path>) -> Result<PathBuf, Error> {
-    let current_folder = std::env::current_exe().context(BinaryLocationSnafu)?;
+    let current_folder = game_executable()?;
     Ok(game_folder(&current_folder)?.join(folder))
 }
 
+/// The path of the game executable.
+#[cfg(not(target_os = "ios"))]
+fn game_executable() -> Result<PathBuf, Error> {
+    std::env::current_exe().context(BinaryLocationSnafu)
+}
+
+/// The path of the game executable.
+///
+/// iOS (CyPort): the process executable is inside the app bundle, while the game folder (`r6`, `red4ext`, `archive`) is in the app's
+/// documents. The CyPort shim exports `MSGameExecutablePath`, which answers with the path the Mac game would have in that folder
+/// (`<game folder>/Cyberpunk2077.app/Contents/MacOS/Cyberpunk2077`, the same answer it gives the game and RED4ext), so [game_folder]
+/// resolves as on macOS. Without the shim the process executable is used.
+#[cfg(target_os = "ios")]
+fn game_executable() -> Result<PathBuf, Error> {
+    use std::ffi::{CStr, c_char, c_int, c_void};
+    unsafe extern "C" {
+        fn dlsym(handle: *mut c_void, symbol: *const c_char) -> *mut c_void;
+    }
+    const RTLD_DEFAULT: *mut c_void = -2isize as *mut c_void;
+    // SAFETY: `dlsym` only looks the name up; the symbol, when present, has this C signature (CyPort shim, MacShim.m).
+    let shim = unsafe { dlsym(RTLD_DEFAULT, c"MSGameExecutablePath".as_ptr()) };
+    if !shim.is_null() {
+        let shim: unsafe extern "C" fn(*mut c_char, *mut u32) -> c_int =
+            unsafe { std::mem::transmute(shim) };
+        let mut buffer = [0 as c_char; 4096];
+        let mut size = buffer.len() as u32;
+        // SAFETY: the buffer is `size` bytes long; on success it holds a NUL terminated path.
+        if unsafe { shim(buffer.as_mut_ptr(), &mut size) } == 0 {
+            let path = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+            if let Ok(path) = path.to_str() {
+                return Ok(PathBuf::from(path));
+            }
+        }
+    }
+    std::env::current_exe().context(BinaryLocationSnafu)
+}
+
 /// The folder of the game, from the path of the game executable.
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_vendor = "apple"))]
 fn game_folder(current_folder: &Path) -> Result<&Path, Error> {
     current_folder
         .parent()
@@ -98,7 +135,7 @@ fn game_folder(current_folder: &Path) -> Result<&Path, Error> {
 /// `r6`, `red4ext` and `archive` (the three `parent()` calls of the Windows layout land on the `.app` bundle). Evidence: the listing of the
 /// installed Mac game (`Cyberpunk2077.app`, `r6`, `red4ext`, `archive`, ... side by side). The bundle is found by its `.app` extension
 /// rather than by counting levels.
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 fn game_folder(current_folder: &Path) -> Result<&Path, Error> {
     current_folder
         .ancestors()
@@ -117,7 +154,7 @@ fn game_folder(current_folder: &Path) -> Result<&Path, Error> {
 /// Manifests are written on Windows, where `\` separates folders. On macOS a `\` is an ordinary character in a file name, so it is
 /// replaced by `/` (a Windows-authored `sfx\door.wav` names `sfx/door.wav`). Other platforms return the path unchanged.
 pub fn manifest_path(path: &Path) -> std::borrow::Cow<'_, Path> {
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     if let Some(text) = path.to_str()
         && text.contains('\\')
     {
@@ -212,7 +249,7 @@ impl std::fmt::Display for ModName {
     }
 }
 
-#[cfg(all(test, target_os = "macos"))]
+#[cfg(all(test, target_vendor = "apple"))]
 mod macos_tests {
     use super::*;
 

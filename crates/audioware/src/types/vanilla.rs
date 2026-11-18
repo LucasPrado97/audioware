@@ -31,7 +31,7 @@ mod orphans;
 pub use orphans::*;
 mod puppet;
 pub use puppet::*;
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 mod puppet_macos;
 mod quaternion;
 pub use quaternion::*;

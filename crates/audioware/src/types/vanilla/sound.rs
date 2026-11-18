@@ -367,9 +367,9 @@ const PADDING_PAST_PLAY_CONTEXT: usize = 0x30 - 0x18;
 /// byte `ldrb w8,[x21,#0x54]` where Windows 0xA30218 reads `[rbp+0x58]`; 0xDCD4AC stores the state at `[x19,#0x55]` and
 /// `is_using_its_sound_object` at `[x19,#0x5a]` where Windows 0xA2FDEC stores `[rbx+0x59]` and `[rbx+0x5e]`; 0xDCD5D8 reads the duration
 /// `ldr s1,[x19,#0x50]` where Windows reads `movss xmm1,[rbx+0x54]`. The fields before it (0x00 to 0x4B) are at the same offsets.
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_vendor = "apple"))]
 const PADDING_PAST_IDS: usize = 0x54 - 0x4C;
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 const PADDING_PAST_IDS: usize = 0x50 - 0x4C;
 
 #[derive(Debug)]
@@ -394,7 +394,7 @@ pub struct Sound {
 }
 
 // macOS: the fields after the ids sit at the offsets listed at `PADDING_PAST_IDS` (checked at compile time).
-#[cfg(target_os = "macos")]
+#[cfg(target_vendor = "apple")]
 const _: () = {
     assert!(std::mem::offset_of!(Sound, sound_object) == 0x30);
     assert!(std::mem::offset_of!(Sound, playing_id) == 0x44);

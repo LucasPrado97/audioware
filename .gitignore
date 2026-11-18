@@ -21,3 +21,6 @@ rustc-ice-*.txt
 *.code-workspace
 /TweakXL-*
 /Codeware-*
+
+# iOS (CyPort) staging output of ios/build-ios.sh
+/deploy

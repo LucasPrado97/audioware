@@ -3,13 +3,13 @@ use red4ext_rs::SdkEnv;
 pub fn attach_hooks(env: &SdkEnv) {
     switch_to_scenario::attach_hook(env);
     queue_event::attach_hook(env);
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     queue_event::broadcast::attach_hook(env);
 }
 pub fn detach_hooks(env: &SdkEnv) {
     switch_to_scenario::detach_hook(env);
     queue_event::detach_hook(env);
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     queue_event::broadcast::detach_hook(env);
 }
 
@@ -67,7 +67,7 @@ mod queue_event {
 
     // macOS: one Windows body serves `QueueEvent` and `QueueBroadcastEvent`; the Mac has a body for each (`QueueEvent` 0x4930374,
     // `QueueBroadcastEvent` 0x4930428). Both get the same detour, each through its own hook, to keep the Windows behaviour.
-    #[cfg(target_os = "macos")]
+    #[cfg(target_vendor = "apple")]
     pub mod broadcast {
         crate::attach_native_func!(
             "inkMenuScenario::QueueBroadcastEvent",

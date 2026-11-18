@@ -1,0 +1,5 @@
+# Audioware test mod for CyPort: two short generated tones.
+version: 1.0.0
+sfx:
+  cyport_test_menu: menu.wav
+  cyport_test_session: session.wav
